@@ -1,39 +1,339 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
 
-<title>Portfolio</title>
+    <meta name="robots" content="noindex, nofollow">
 
-<style>
+    <title>Portfolio</title>
 
-html,body{
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-margin:0;
-height:100%;
-background:#1a1a1a;
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
 
-}
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #151515;
+            color: #ffffff;
+            font-family: Helvetica Neue Thin , Helvetica, sans-serif;
+        }
 
-iframe{
+        .toolbar {
+            height: 58px;
+            flex-shrink: 0;
 
-width:100%;
-height:100%;
-border:none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
 
-}
+            padding: 8px 16px;
+            background: #151515;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
 
-</style>
+        .toolbar button,
+        .toolbar a {
+            min-width: 90px;
+            padding: 8px 12px;
 
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: transparent;
+            color: #ffffff;
+
+            font: inherit;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-align: center;
+            text-decoration: none;
+            text-transform: uppercase;
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease,
+                opacity 0.2s ease;
+        }
+
+        .toolbar button:hover,
+        .toolbar a:hover {
+            background: #ffffff;
+            color: #111111;
+        }
+
+        .toolbar button:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .toolbar button:disabled:hover {
+            background: transparent;
+            color: #ffffff;
+        }
+
+        #page-counter {
+            min-width: 120px;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-align: center;
+        }
+
+        .viewer {
+            position: relative;
+            flex: 1;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            min-height: 0;
+            padding: 24px;
+            overflow: auto;
+        }
+
+        canvas {
+            display: block;
+
+            max-width: 100%;
+            max-height: 100%;
+
+            background: #ffffff;
+            box-shadow: 0 12px 45px rgba(0, 0, 0, 0.5);
+        }
+
+        #message {
+            position: absolute;
+            inset: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 30px;
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            line-height: 1.6;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 700px) {
+            .toolbar {
+                gap: 8px;
+                padding: 8px;
+            }
+
+            .toolbar button,
+            .toolbar a {
+                min-width: auto;
+                padding: 8px 10px;
+                font-size: 10px;
+            }
+
+            #page-counter {
+                min-width: 72px;
+                font-size: 10px;
+            }
+
+            .viewer {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<iframe src="portfolio.pdf#page=1&view=FitH"></iframe>
+    <header class="toolbar">
+        <a href="index.html">Back</a>
+
+        <button id="previous" type="button">
+            Previous
+        </button>
+
+        <div id="page-counter">
+            Loading
+        </div>
+
+        <button id="next" type="button">
+            Next
+        </button>
+    </header>
+
+    <main class="viewer" id="viewer">
+        <div id="message">Loading portfolio…</div>
+        <canvas id="pdf-canvas" hidden></canvas>
+    </main>
+
+    <script type="module">
+        import * as pdfjsLib from
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs";
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs";
+
+        const PDF_FILE = "portfolio.pdf";
+
+        const canvas = document.getElementById("pdf-canvas");
+        const context = canvas.getContext("2d");
+
+        const viewer = document.getElementById("viewer");
+        const message = document.getElementById("message");
+
+        const previousButton = document.getElementById("previous");
+        const nextButton = document.getElementById("next");
+        const pageCounter = document.getElementById("page-counter");
+
+        let pdfDocument = null;
+        let currentPage = 1;
+        let activeRenderTask = null;
+        let resizeTimer = null;
+
+        async function renderCurrentPage() {
+            if (!pdfDocument) {
+                return;
+            }
+
+            if (activeRenderTask) {
+                activeRenderTask.cancel();
+                activeRenderTask = null;
+            }
+
+            const page = await pdfDocument.getPage(currentPage);
+            const originalViewport = page.getViewport({ scale: 1 });
+
+            const horizontalPadding = 48;
+            const verticalPadding = 48;
+
+            const availableWidth =
+                Math.max(200, viewer.clientWidth - horizontalPadding);
+
+            const availableHeight =
+                Math.max(200, viewer.clientHeight - verticalPadding);
+
+            const scaleToWidth =
+                availableWidth / originalViewport.width;
+
+            const scaleToHeight =
+                availableHeight / originalViewport.height;
+
+            const displayScale =
+                Math.min(scaleToWidth, scaleToHeight);
+
+            const pixelRatio =
+                Math.min(window.devicePixelRatio || 1, 2);
+
+            const renderViewport = page.getViewport({
+                scale: displayScale * pixelRatio
+            });
+
+            const displayViewport = page.getViewport({
+                scale: displayScale
+            });
+
+            canvas.width = Math.floor(renderViewport.width);
+            canvas.height = Math.floor(renderViewport.height);
+
+            canvas.style.width =
+                `${Math.floor(displayViewport.width)}px`;
+
+            canvas.style.height =
+                `${Math.floor(displayViewport.height)}px`;
+
+            canvas.hidden = false;
+            message.hidden = true;
+
+            activeRenderTask = page.render({
+                canvasContext: context,
+                viewport: renderViewport
+            });
+
+            try {
+                await activeRenderTask.promise;
+            } catch (error) {
+                if (error?.name !== "RenderingCancelledException") {
+                    throw error;
+                }
+            } finally {
+                activeRenderTask = null;
+            }
+
+            pageCounter.textContent =
+                `${currentPage} / ${pdfDocument.numPages}`;
+
+            previousButton.disabled = currentPage === 1;
+            nextButton.disabled =
+                currentPage === pdfDocument.numPages;
+        }
+
+        previousButton.addEventListener("click", async () => {
+            if (currentPage > 1) {
+                currentPage -= 1;
+                await renderCurrentPage();
+            }
+        });
+
+        nextButton.addEventListener("click", async () => {
+            if (
+                pdfDocument &&
+                currentPage < pdfDocument.numPages
+            ) {
+                currentPage += 1;
+                await renderCurrentPage();
+            }
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "ArrowLeft") {
+                previousButton.click();
+            }
+
+            if (event.key === "ArrowRight") {
+                nextButton.click();
+            }
+        });
+
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+
+            resizeTimer = setTimeout(() => {
+                renderCurrentPage();
+            }, 200);
+        });
+
+        async function loadPortfolio() {
+            try {
+                pdfDocument =
+                    await pdfjsLib.getDocument(PDF_FILE).promise;
+
+                await renderCurrentPage();
+            } catch (error) {
+                console.error(error);
+
+                message.hidden = false;
+                message.textContent =
+                    "The portfolio could not be loaded. " +
+                    "Check that the file is named portfolio.pdf.";
+            }
+        }
+
+        loadPortfolio();
+    </script>
 
 </body>
-
 </html>
