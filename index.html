@@ -1,70 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="robots" content="noindex, nofollow">
 
 <title>Portfolio</title>
 
 <style>
 
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
 html,body{
-height:100%;
-width:100%;
-overflow:hidden;
-font-family:Helvetica Neue Thin,Helvetica,sans-serif;
+    width:100%;
+    height:100%;
+    overflow:hidden;
 }
 
 body{
 
-background:url("background2.jpg") center center;
-background-size:cover;
-background-repeat:no-repeat;
+    background-image:url("background2.jpg");
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
 
-display:flex;
-justify-content:center;
-align-items:flex-end;
+    display:flex;
+    justify-content:center;
+    align-items:flex-end;
+
+    font-family:Helvetica Neue Thin, Helvetica, sans-serif;
 
 }
+
+/* subtle dark overlay */
 
 body::before{
 
-content:"";
-position:absolute;
-inset:0;
-background:rgba(0,0,0,.15);
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    background:rgba(0,0,0,.15);
 
 }
 
+/* Portfolio text */
+
 a{
 
-position:relative;
-z-index:10;
+    position:relative;
+    z-index:10;
 
-margin-bottom:7vh;
+    margin-bottom:7vh;
 
-text-decoration:none;
-color:white;
+    color:white;
+    text-decoration:none;
 
-font-size:3rem;
-font-weight:300;
-letter-spacing:.45em;
+    text-transform:uppercase;
 
-transition:.35s;
+    font-size:3rem;
+    font-weight:300;
+
+    letter-spacing:.45em;
+
+    transition:.35s ease;
 
 }
 
 a:hover{
 
-letter-spacing:.6em;
-opacity:.75;
+    letter-spacing:.6em;
+    opacity:.75;
+
+}
+
+@media (max-width:768px){
+
+a{
+
+font-size:2rem;
+letter-spacing:.3em;
+
+}
 
 }
 
@@ -79,4 +104,5 @@ PORTFOLIO
 </a>
 
 </body>
+
 </html>
