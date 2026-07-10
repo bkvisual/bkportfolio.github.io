@@ -113,7 +113,7 @@
             align-items: center;
             justify-content: center;
 
-            padding: 22px;
+            padding: 22px 22px 64px;
             overflow: auto;
         }
 
@@ -137,7 +137,7 @@
         #status {
             position: absolute;
             left: 50%;
-            bottom: 14px;
+            bottom: 48px;
             transform: translateX(-50%);
 
             font-size: 9px;
@@ -149,6 +149,32 @@
 
         #status.hidden {
             display: none;
+        }
+
+        .download-button {
+            position: absolute;
+            left: 50%;
+            bottom: 16px;
+            transform: translateX(-50%);
+
+            color: #ffffff;
+            text-decoration: none;
+            text-transform: uppercase;
+
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 0.16em;
+
+            opacity: 0.65;
+
+            transition:
+                opacity 0.25s ease,
+                letter-spacing 0.25s ease;
+        }
+
+        .download-button:hover {
+            opacity: 1;
+            letter-spacing: 0.22em;
         }
 
         #error-message {
@@ -191,7 +217,13 @@
             }
 
             .viewer {
-                padding: 8px;
+                padding: 8px 8px 56px;
+            }
+
+            .download-button {
+                bottom: 14px;
+                font-size: 9px;
+                letter-spacing: 0.12em;
             }
         }
     </style>
@@ -219,6 +251,14 @@
         <div id="status">
             Loading
         </div>
+
+        <a
+            class="download-button"
+            href="portfolio.pdf"
+            download
+        >
+            Download Portfolio
+        </a>
 
         <div id="error-message">
             The portfolio could not be loaded.<br>
@@ -290,7 +330,7 @@
                 Math.max(240, viewer.clientWidth - 44);
 
             const availableHeight =
-                Math.max(240, viewer.clientHeight - 44);
+                Math.max(240, viewer.clientHeight - 86);
 
             const scaleByWidth =
                 availableWidth / baseViewport.width;
