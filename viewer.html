@@ -10,7 +10,7 @@
 
     <meta name="robots" content="noindex, nofollow">
 
-    <title>Portfolio</title>
+    <title>Portfolio Viewer</title>
 
     <style>
         * {
@@ -27,41 +27,55 @@
         body {
             display: flex;
             flex-direction: column;
+
             overflow: hidden;
+
             background: #151515;
-            color: #ffffff;
-            font-family: Helvetica Neue Thin , Helvetica, sans-serif;
+            color: #fff;
+
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Helvetica Neue",
+                Helvetica,
+                Arial,
+                sans-serif;
         }
 
         .toolbar {
-            height: 58px;
+            min-height: 58px;
             flex-shrink: 0;
 
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 16px;
 
-            padding: 8px 16px;
-            background: #151515;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            padding:
+                max(8px, env(safe-area-inset-top))
+                14px
+                8px;
+
+            background: rgba(18, 18, 18, 0.97);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.13);
         }
 
-        .toolbar button,
-        .toolbar a {
-            min-width: 90px;
-            padding: 8px 12px;
+        .toolbar a,
+        .toolbar button {
+            min-width: 86px;
+            padding: 9px 12px;
 
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.42);
             background: transparent;
-            color: #ffffff;
+            color: #fff;
 
             font: inherit;
-            font-size: 12px;
+            font-size: 11px;
             letter-spacing: 0.12em;
             text-align: center;
             text-decoration: none;
             text-transform: uppercase;
+
             cursor: pointer;
 
             transition:
@@ -70,53 +84,57 @@
                 opacity 0.2s ease;
         }
 
-        .toolbar button:hover,
-        .toolbar a:hover {
-            background: #ffffff;
-            color: #111111;
+        .toolbar a:hover,
+        .toolbar button:hover {
+            background: #fff;
+            color: #111;
         }
 
         .toolbar button:disabled {
-            opacity: 0.3;
+            opacity: 0.25;
             cursor: default;
         }
 
         .toolbar button:disabled:hover {
             background: transparent;
-            color: #ffffff;
+            color: #fff;
         }
 
         #page-counter {
-            min-width: 120px;
-            font-size: 12px;
-            letter-spacing: 0.1em;
+            min-width: 100px;
+
+            font-size: 11px;
+            letter-spacing: 0.12em;
             text-align: center;
+            text-transform: uppercase;
         }
 
         .viewer {
             position: relative;
             flex: 1;
+            min-height: 0;
 
             display: flex;
             align-items: center;
             justify-content: center;
 
-            min-height: 0;
-            padding: 24px;
+            padding: 22px;
             overflow: auto;
+
+            background: #151515;
         }
 
-        canvas {
+        #pdf-canvas {
             display: block;
 
             max-width: 100%;
             max-height: 100%;
 
-            background: #ffffff;
-            box-shadow: 0 12px 45px rgba(0, 0, 0, 0.5);
+            background: white;
+            box-shadow: 0 14px 48px rgba(0, 0, 0, 0.48);
         }
 
-        #message {
+        #loading-message {
             position: absolute;
             inset: 0;
 
@@ -125,33 +143,52 @@
             justify-content: center;
 
             padding: 30px;
-            font-size: 13px;
-            letter-spacing: 0.12em;
-            line-height: 1.6;
+
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            line-height: 1.7;
             text-align: center;
             text-transform: uppercase;
+
+            background: #151515;
+            z-index: 2;
+        }
+
+        #loading-message.hidden {
+            display: none;
+        }
+
+        .error {
+            color: #fff;
+            max-width: 560px;
         }
 
         @media (max-width: 700px) {
             .toolbar {
-                gap: 8px;
-                padding: 8px;
+                gap: 6px;
+                padding-left: 8px;
+                padding-right: 8px;
             }
 
-            .toolbar button,
-            .toolbar a {
+            .toolbar a,
+            .toolbar button {
                 min-width: auto;
-                padding: 8px 10px;
-                font-size: 10px;
+                padding: 8px 9px;
+                font-size: 9px;
             }
 
             #page-counter {
-                min-width: 72px;
-                font-size: 10px;
+                min-width: 64px;
+                font-size: 9px;
             }
 
             .viewer {
-                padding: 10px;
+                padding: 8px;
+                align-items: flex-start;
+            }
+
+            #pdf-canvas {
+                max-height: none;
             }
         }
     </style>
@@ -176,32 +213,47 @@
     </header>
 
     <main class="viewer" id="viewer">
-        <div id="message">Loading portfolio…</div>
-        <canvas id="pdf-canvas" hidden></canvas>
+        <div id="loading-message">
+            Loading portfolio
+        </div>
+
+        <canvas id="pdf-canvas"></canvas>
     </main>
 
     <script type="module">
         import * as pdfjsLib from
-            "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.min.mjs";
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.min.mjs";
 
         pdfjsLib.GlobalWorkerOptions.workerSrc =
-            "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs";
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.7.284/build/pdf.worker.min.mjs";
 
         const PDF_FILE = "portfolio.pdf";
 
-        const canvas = document.getElementById("pdf-canvas");
-        const context = canvas.getContext("2d");
+        const viewer =
+            document.getElementById("viewer");
 
-        const viewer = document.getElementById("viewer");
-        const message = document.getElementById("message");
+        const canvas =
+            document.getElementById("pdf-canvas");
 
-        const previousButton = document.getElementById("previous");
-        const nextButton = document.getElementById("next");
-        const pageCounter = document.getElementById("page-counter");
+        const context =
+            canvas.getContext("2d");
+
+        const loadingMessage =
+            document.getElementById("loading-message");
+
+        const previousButton =
+            document.getElementById("previous");
+
+        const nextButton =
+            document.getElementById("next");
+
+        const pageCounter =
+            document.getElementById("page-counter");
 
         let pdfDocument = null;
         let currentPage = 1;
         let activeRenderTask = null;
+        let renderSequence = 0;
         let resizeTimer = null;
 
         async function renderCurrentPage() {
@@ -209,54 +261,64 @@
                 return;
             }
 
+            const sequence = ++renderSequence;
+
             if (activeRenderTask) {
                 activeRenderTask.cancel();
                 activeRenderTask = null;
             }
 
-            const page = await pdfDocument.getPage(currentPage);
-            const originalViewport = page.getViewport({ scale: 1 });
+            const page =
+                await pdfDocument.getPage(currentPage);
 
-            const horizontalPadding = 48;
-            const verticalPadding = 48;
+            const initialViewport =
+                page.getViewport({ scale: 1 });
 
             const availableWidth =
-                Math.max(200, viewer.clientWidth - horizontalPadding);
+                Math.max(240, viewer.clientWidth - 44);
 
             const availableHeight =
-                Math.max(200, viewer.clientHeight - verticalPadding);
+                Math.max(240, viewer.clientHeight - 44);
 
-            const scaleToWidth =
-                availableWidth / originalViewport.width;
+            const scaleByWidth =
+                availableWidth / initialViewport.width;
 
-            const scaleToHeight =
-                availableHeight / originalViewport.height;
+            const scaleByHeight =
+                availableHeight / initialViewport.height;
 
-            const displayScale =
-                Math.min(scaleToWidth, scaleToHeight);
+            let displayScale;
+
+            if (window.innerWidth <= 700) {
+                displayScale = scaleByWidth;
+            } else {
+                displayScale =
+                    Math.min(scaleByWidth, scaleByHeight);
+            }
 
             const pixelRatio =
                 Math.min(window.devicePixelRatio || 1, 2);
 
-            const renderViewport = page.getViewport({
-                scale: displayScale * pixelRatio
-            });
+            const displayViewport =
+                page.getViewport({
+                    scale: displayScale
+                });
 
-            const displayViewport = page.getViewport({
-                scale: displayScale
-            });
+            const renderViewport =
+                page.getViewport({
+                    scale: displayScale * pixelRatio
+                });
 
-            canvas.width = Math.floor(renderViewport.width);
-            canvas.height = Math.floor(renderViewport.height);
+            canvas.width =
+                Math.floor(renderViewport.width);
+
+            canvas.height =
+                Math.floor(renderViewport.height);
 
             canvas.style.width =
                 `${Math.floor(displayViewport.width)}px`;
 
             canvas.style.height =
                 `${Math.floor(displayViewport.height)}px`;
-
-            canvas.hidden = false;
-            message.hidden = true;
 
             activeRenderTask = page.render({
                 canvasContext: context,
@@ -265,70 +327,104 @@
 
             try {
                 await activeRenderTask.promise;
+
+                if (sequence !== renderSequence) {
+                    return;
+                }
+
+                loadingMessage.classList.add("hidden");
+
+                pageCounter.textContent =
+                    `${currentPage} / ${pdfDocument.numPages}`;
+
+                previousButton.disabled =
+                    currentPage <= 1;
+
+                nextButton.disabled =
+                    currentPage >= pdfDocument.numPages;
             } catch (error) {
-                if (error?.name !== "RenderingCancelledException") {
+                if (
+                    error?.name !==
+                    "RenderingCancelledException"
+                ) {
                     throw error;
                 }
             } finally {
                 activeRenderTask = null;
             }
-
-            pageCounter.textContent =
-                `${currentPage} / ${pdfDocument.numPages}`;
-
-            previousButton.disabled = currentPage === 1;
-            nextButton.disabled =
-                currentPage === pdfDocument.numPages;
         }
 
-        previousButton.addEventListener("click", async () => {
-            if (currentPage > 1) {
-                currentPage -= 1;
-                await renderCurrentPage();
+        previousButton.addEventListener(
+            "click",
+            async function () {
+                if (currentPage > 1) {
+                    currentPage -= 1;
+                    await renderCurrentPage();
+                }
             }
-        });
+        );
 
-        nextButton.addEventListener("click", async () => {
-            if (
-                pdfDocument &&
-                currentPage < pdfDocument.numPages
-            ) {
-                currentPage += 1;
-                await renderCurrentPage();
+        nextButton.addEventListener(
+            "click",
+            async function () {
+                if (
+                    pdfDocument &&
+                    currentPage < pdfDocument.numPages
+                ) {
+                    currentPage += 1;
+                    await renderCurrentPage();
+                }
             }
-        });
+        );
 
-        document.addEventListener("keydown", event => {
-            if (event.key === "ArrowLeft") {
-                previousButton.click();
+        document.addEventListener(
+            "keydown",
+            function (event) {
+                if (event.key === "ArrowLeft") {
+                    previousButton.click();
+                }
+
+                if (event.key === "ArrowRight") {
+                    nextButton.click();
+                }
+
+                if (event.key === "Escape") {
+                    window.location.href = "index.html";
+                }
             }
+        );
 
-            if (event.key === "ArrowRight") {
-                nextButton.click();
+        window.addEventListener(
+            "resize",
+            function () {
+                clearTimeout(resizeTimer);
+
+                resizeTimer = setTimeout(
+                    renderCurrentPage,
+                    180
+                );
             }
-        });
-
-        window.addEventListener("resize", () => {
-            clearTimeout(resizeTimer);
-
-            resizeTimer = setTimeout(() => {
-                renderCurrentPage();
-            }, 200);
-        });
+        );
 
         async function loadPortfolio() {
             try {
+                const loadingTask =
+                    pdfjsLib.getDocument(PDF_FILE);
+
                 pdfDocument =
-                    await pdfjsLib.getDocument(PDF_FILE).promise;
+                    await loadingTask.promise;
 
                 await renderCurrentPage();
             } catch (error) {
                 console.error(error);
 
-                message.hidden = false;
-                message.textContent =
-                    "The portfolio could not be loaded. " +
-                    "Check that the file is named portfolio.pdf.";
+                loadingMessage.classList.remove("hidden");
+                loadingMessage.classList.add("error");
+
+                loadingMessage.innerHTML =
+                    "The portfolio could not be loaded.<br>" +
+                    "Check that the PDF is named exactly " +
+                    "<strong>portfolio.pdf</strong>.";
             }
         }
 
