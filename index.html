@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    height:100vh;
+    overflow:hidden;
+    font-family:Helvetica Neue Thin, Helvetica, sans-serif;
+}
+
+.background{
+    position:fixed;
+    inset:0;
+    background-image:url("background2.jpg");
+    background-size:cover;
+    background-position:center;
+}
+
+.overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.18);
+}
+
+.content{
+    position:absolute;
+    bottom:8%;
+    left:50%;
+    transform:translateX(-50%);
+    text-align:center;
+}
+
+a{
+    text-decoration:none;
+    color:white;
+    font-size:3rem;
+    font-weight:300;
+    letter-spacing:12px;
+    text-transform:uppercase;
+    transition:0.35s ease;
+}
+
+a:hover{
+    letter-spacing:18px;
+    opacity:0.75;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="background">
+    <div class="overlay"></div>
+</div>
+
+<div class="content">
+    <a href="portfolio.pdf" target="_blank">Portfolio</a>
+</div>
+
+</body>
+</html>
