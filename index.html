@@ -1,72 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Portfolio</title>
 
 <style>
+
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+html,body{
+height:100%;
+width:100%;
+overflow:hidden;
+font-family:Helvetica Neue Thin,Helvetica,sans-serif;
 }
 
 body{
-    height:100vh;
-    overflow:hidden;
-    font-family:Helvetica Neue Thin, Helvetica, sans-serif;
+
+background:url("background2.jpg") center center;
+background-size:cover;
+background-repeat:no-repeat;
+
+display:flex;
+justify-content:center;
+align-items:flex-end;
+
 }
 
-.background{
-    position:fixed;
-    inset:0;
-    background-image:url("background2.jpg");
-    background-size:cover;
-    background-position:center;
-}
+body::before{
 
-.overlay{
-    position:absolute;
-    inset:0;
-    background:rgba(0,0,0,0.18);
-}
+content:"";
+position:absolute;
+inset:0;
+background:rgba(0,0,0,.15);
 
-.content{
-    position:absolute;
-    bottom:8%;
-    left:50%;
-    transform:translateX(-50%);
-    text-align:center;
 }
 
 a{
-    text-decoration:none;
-    color:white;
-    font-size:3rem;
-    font-weight:300;
-    letter-spacing:12px;
-    text-transform:uppercase;
-    transition:0.35s ease;
+
+position:relative;
+z-index:10;
+
+margin-bottom:7vh;
+
+text-decoration:none;
+color:white;
+
+font-size:3rem;
+font-weight:300;
+letter-spacing:.45em;
+
+transition:.35s;
+
 }
 
 a:hover{
-    letter-spacing:18px;
-    opacity:0.75;
+
+letter-spacing:.6em;
+opacity:.75;
+
 }
+
 </style>
 
 </head>
 
 <body>
 
-<div class="background">
-    <div class="overlay"></div>
-</div>
-
-<div class="content">
-    <a href="portfolio.pdf" target="_blank">Portfolio</a>
-</div>
+<a href="viewer.html">
+PORTFOLIO
+</a>
 
 </body>
 </html>
