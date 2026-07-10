@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+
+    <title>Portfolio</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            background: #111;
+            color: white;
+            font-family: Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 10px 18px;
+            background: #181818;
+            border-bottom: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        button {
+            background: transparent;
+            color: white;
+            border: 1px solid #666;
+            padding: 9px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            letter-spacing: 0.08em;
+        }
+
+        button:hover {
+            background: white;
+            color: black;
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        #page-info {
+            min-width: 150px;
+            text-align: center;
+            font-size: 14px;
+            letter-spacing: 0.08em;
+        }
+
+        .viewer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            padding: 28px;
+        }
+
+        .spread {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            min-width: min-content;
+        }
+
+        canvas {
+            display: block;
+            max-height: calc(100vh - 120px);
+            max-width: 46vw;
+            width: auto;
+            height: auto;
+            background: white;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+        }
+
+        .blank-page {
+            width: 42vw;
+            aspect-ratio: 1 / 1.414;
+            max-height: calc(100vh - 120px);
+            background: transparent;
+        }
+
+        .loading {
+            font-size: 15px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 800px) {
+            body {
+                overflow: auto;
+            }
+
+            .viewer {
+                align-items: flex-start;
+                padding: 14px;
+            }
+
+            .spread {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            canvas {
+                max-width: 100%;
+                max-height: none;
+                width: 100%;
+            }
+
+            .blank-page {
+                display: none;
+            }
+
+            .toolbar {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="toolbar">
+        <button id="previous">Previous</button>
+        <div id="page-info">Loading…</div>
+        <button id="next">Next</button>
+    </div>
+
+    <main class="viewer">
+        <div id="loading" class="loading">Loading portfolio…</div>
+
+        <div id="spread" class="spread" hidden>
+            <canvas id="left-page"></canvas>
+            <canvas id="right-page"></canvas>
+        </div>
+    </main>
+
+    <script type="module">
+        import * as pdfjsLib from
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+
+        const pdfURL = "Portfolio.pdf";
+
+        const leftCanvas = document.getElementById("left-page");
+        const rightCanvas = document.getElementById("right-page");
+        const spread = document.getElementById("spread");
+        const loading = document.getElementById("loading");
+        const pageInfo = document.getElementById("page-info");
+        const previousButton = document.getElementById("previous");
+        const nextButton = document.getElementById("next");
+
+        let pdfDocument = null;
+        let currentStartPage = 1;
+        let rendering = false;
+
+        async function renderPage(pageNumber, canvas) {
+            if (pageNumber > pdfDocument.numPages) {
+                canvas.hidden = true;
+                return;
+            }
+
+            canvas.hidden = false;
+
+            const page = await pdfDocument.getPage(pageNumber);
+            const baseViewport = page.getViewport({ scale: 1 });
+
+            const availableWidth = window.innerWidth <= 800
+                ? window.innerWidth - 28
+                : (window.innerWidth - 80) / 2;
+
+            const availableHeight = window.innerHeight - 130;
+
+            const scaleByWidth = availableWidth / baseViewport.width;
+            const scaleByHeight = availableHeight / baseViewport.height;
+
+            const displayScale = window.innerWidth <= 800
+                ? scaleByWidth
+                : Math.min(scaleByWidth, scaleByHeight);
+
+            const pixelRatio = window.devicePixelRatio || 1;
+            const viewport = page.getViewport({
+                scale: displayScale * pixelRatio
+            });
+
+            const context = canvas.getContext("2d");
+
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            canvas.style.width = `${viewport.width / pixelRatio}px`;
+            canvas.style.height = `${viewport.height / pixelRatio}px`;
+
+            await page.render({
+                canvasContext: context,
+                viewport
+            }).promise;
+        }
+
+        async function renderSpread() {
+            if (!pdfDocument || rendering) return;
+
+            rendering = true;
+
+            previousButton.disabled = true;
+            nextButton.disabled = true;
+
+            await renderPage(currentStartPage, leftCanvas);
+            await renderPage(currentStartPage + 1, rightCanvas);
+
+            const finalPage = Math.min(
+                currentStartPage + 1,
+                pdfDocument.numPages
+            );
+
+            pageInfo.textContent =
+                `Pages ${currentStartPage}–${finalPage} of ${pdfDocument.numPages}`;
+
+            previousButton.disabled = currentStartPage <= 1;
+            nextButton.disabled =
+                currentStartPage + 1 >= pdfDocument.numPages;
+
+            rendering = false;
+        }
+
+        previousButton.addEventListener("click", async () => {
+            if (currentStartPage > 1) {
+                currentStartPage = Math.max(1, currentStartPage - 2);
+                await renderSpread();
+            }
+        });
+
+        nextButton.addEventListener("click", async () => {
+            if (currentStartPage + 1 < pdfDocument.numPages) {
+                currentStartPage += 2;
+                await renderSpread();
+            }
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "ArrowLeft") {
+                previousButton.click();
+            }
+
+            if (event.key === "ArrowRight") {
+                nextButton.click();
+            }
+        });
+
+        let resizeTimer;
+
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+
+            resizeTimer = setTimeout(() => {
+                renderSpread();
+            }, 200);
+        });
+
+        try {
+            pdfDocument = await pdfjsLib.getDocument(pdfURL).promise;
+
+            loading.hidden = true;
+            spread.hidden = false;
+
+            await renderSpread();
+        } catch (error) {
+            console.error(error);
+            loading.textContent =
+                "The portfolio could not be loaded. Check that the PDF filename matches exactly.";
+        }
+    </script>
+
+</body>
+</html>
