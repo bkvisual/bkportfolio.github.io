@@ -1,108 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<meta name="robots" content="noindex, nofollow">
+    <meta name="robots" content="noindex, nofollow">
 
-<title>Portfolio</title>
+    <title>Portfolio</title>
 
-<style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
 
-html,body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-}
+        body {
+            position: relative;
+            overflow: hidden;
 
-body{
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
 
-    background-image:url("background2.jpg");
-    background-size:cover;
-    background-position:center;
-    background-repeat:no-repeat;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Helvetica Neue",
+                Helvetica,
+                Helvetica,
+                sans-serif;
 
-    display:flex;
-    justify-content:center;
-    align-items:flex-end;
+            background-color: #111;
+        }
 
-    font-family:Helvetica Neue Thin, Helvetica, sans-serif;
+        .background {
+            position: fixed;
+            inset: 0;
 
-}
+            background-image: url("background2.jpg");
+            background-position: center;
+            background-size: cover;
+            background-repeat: no-repeat;
 
-/* subtle dark overlay */
+            opacity: 0;
+            transform: scale(1.02);
 
-body::before{
+            animation: backgroundFade 1.8s ease forwards;
+        }
 
-    content:"";
+        .overlay {
+            position: fixed;
+            inset: 0;
 
-    position:absolute;
-    inset:0;
+            background: rgba(0, 0, 0, 0.18);
+            opacity: 0;
 
-    background:rgba(0,0,0,.15);
+            animation: overlayFade 1.8s ease forwards;
+        }
 
-}
+        .portfolio-entry {
+            position: relative;
+            z-index: 2;
 
-/* Portfolio text */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
 
-a{
+            margin-bottom: 7vh;
 
-    position:relative;
-    z-index:10;
+            color: #fff;
+            text-decoration: none;
 
-    margin-bottom:7vh;
+            opacity: 0;
+            transform: translateY(14px);
 
-    color:white;
-    text-decoration:none;
+            animation: contentFade 1.2s ease forwards;
+            animation-delay: 1.1s;
+        }
 
-    text-transform:uppercase;
+        .portfolio-title {
+            position: relative;
 
-    font-size:3rem;
-    font-weight:300;
+            padding-left: 0.45em;
 
-    letter-spacing:.45em;
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 300;
+            letter-spacing: 0.45em;
+            line-height: 1;
+            text-transform: uppercase;
 
-    transition:.35s ease;
+            transition:
+                letter-spacing 0.35s ease,
+                opacity 0.35s ease;
+        }
 
-}
+        .portfolio-title::after {
+            content: "";
 
-a:hover{
+            position: absolute;
+            left: 50%;
+            bottom: -14px;
 
-    letter-spacing:.6em;
-    opacity:.75;
+            width: 0;
+            height: 1px;
 
-}
+            background: #fff;
+            transform: translateX(-50%);
 
-@media (max-width:768px){
+            transition: width 0.4s ease;
+        }
 
-a{
+        .portfolio-name {
+            margin-top: 28px;
+            padding-left: 0.24em;
 
-font-size:2rem;
-letter-spacing:.3em;
+            font-size: clamp(0.58rem, 1vw, 0.72rem);
+            font-weight: 400;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
 
-}
+            opacity: 0.82;
 
-}
+            transition:
+                opacity 0.35s ease,
+                letter-spacing 0.35s ease;
+        }
 
-</style>
+        .portfolio-entry:hover .portfolio-title {
+            letter-spacing: 0.56em;
+            opacity: 0.88;
+        }
 
+        .portfolio-entry:hover .portfolio-title::after {
+            width: 100%;
+        }
+
+        .portfolio-entry:hover .portfolio-name {
+            letter-spacing: 0.3em;
+            opacity: 1;
+        }
+
+        body.leaving .background,
+        body.leaving .overlay,
+        body.leaving .portfolio-entry {
+            opacity: 0;
+            transition: opacity 0.55s ease;
+        }
+
+        body.leaving .background {
+            transform: scale(1.04);
+            transition:
+                opacity 0.55s ease,
+                transform 0.75s ease;
+        }
+
+        @keyframes backgroundFade {
+            from {
+                opacity: 0;
+                transform: scale(1.02);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes overlayFade {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes contentFade {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .portfolio-entry {
+                margin-bottom: 9vh;
+            }
+
+            .portfolio-title {
+                letter-spacing: 0.3em;
+                padding-left: 0.3em;
+            }
+
+            .portfolio-entry:hover .portfolio-title {
+                letter-spacing: 0.36em;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .background,
+            .overlay,
+            .portfolio-entry {
+                animation: none;
+                opacity: 1;
+                transform: none;
+            }
+
+            .portfolio-title,
+            .portfolio-title::after,
+            .portfolio-name {
+                transition: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-<a href="viewer.html">
-PORTFOLIO
-</a>
+    <div class="background"></div>
+    <div class="overlay"></div>
+
+    <a
+        class="portfolio-entry"
+        id="portfolio-link"
+        href="viewer.html"
+    >
+        <span class="portfolio-title">Portfolio</span>
+        <span class="portfolio-name">BETTY K</span>
+    </a>
+
+    <script>
+        const portfolioLink =
+            document.getElementById("portfolio-link");
+
+        portfolioLink.addEventListener("click", function (event) {
+            event.preventDefault();
+
+            document.body.classList.add("leaving");
+
+            setTimeout(function () {
+                window.location.href = portfolioLink.href;
+            }, 520);
+        });
+    </script>
 
 </body>
-
 </html>
